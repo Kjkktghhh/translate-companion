@@ -57,6 +57,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        ink: {
+          300: "hsl(220 15% 70%)",
+          400: "hsl(220 10% 50%)",
+          500: "hsl(220 10% 40%)",
+          600: "hsl(220 10% 30%)",
+          700: "hsl(228 10% 18%)",
+          800: "hsl(228 14% 11%)",
+          900: "hsl(228 14% 8%)",
+        },
+        coral: {
+          300: "hsl(12 85% 65%)",
+          400: "hsl(12 85% 58%)",
+          500: "hsl(12 85% 55%)",
+          600: "hsl(12 85% 48%)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
