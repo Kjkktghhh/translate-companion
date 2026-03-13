@@ -77,6 +77,16 @@ const MOCK_BATCHES: Batch[] = [
   },
 ];
 
+const MOCK_DALBA_IMAGE: ImageJob = {
+  id: 'img-dalba',
+  filename: 'dalba-uv-essence-cover-up.png',
+  status: 'high_confidence',
+  confidence_score: 92,
+  ocr_data: { total_blocks: 14 },
+  output_path_zh_hant: '/mock',
+  output_path_en: '/mock',
+};
+
 const MOCK_IMAGES: ImageJob[] = [
   { id: 'img1', filename: 'serum-front.jpg', status: 'high_confidence', confidence_score: 95, ocr_data: { total_blocks: 8 }, output_path_zh_hant: '/mock', output_path_en: '/mock' },
   { id: 'img2', filename: 'cream-back.png', status: 'medium_confidence', confidence_score: 78, ocr_data: { total_blocks: 12 }, output_path_zh_hant: '/mock', output_path_en: '/mock' },
