@@ -150,7 +150,7 @@ export const mockAPI = {
     list: () => Promise.resolve(batches),
     get: (id: string) => Promise.resolve(batches.find(b => b.id === id) || null),
     getImages: (_id: string, _filter?: string | null) => {
-      let imgs = [...MOCK_IMAGES];
+      let imgs = _id === '0' ? [MOCK_DALBA_IMAGE] : [...MOCK_IMAGES];
       if (_filter === 'high') imgs = imgs.filter(i => i.status === 'high_confidence');
       if (_filter === 'medium') imgs = imgs.filter(i => i.status === 'medium_confidence');
       if (_filter === 'low') imgs = imgs.filter(i => i.status === 'low_confidence');
