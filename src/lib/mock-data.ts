@@ -9,6 +9,12 @@ export type Batch = {
   target_languages: string[];
 };
 
+export type OcrBlock = {
+  korean: string;
+  zh_hant: string;
+  english: string;
+};
+
 export type ImageJob = {
   id: string;
   filename: string;
@@ -17,6 +23,8 @@ export type ImageJob = {
   ocr_data: { total_blocks: number } | null;
   output_path_zh_hant: string | null;
   output_path_en: string | null;
+  thumbnail?: string;
+  ocr_blocks?: OcrBlock[];
 };
 
 export type Glossary = {
@@ -35,6 +43,16 @@ export type GlossaryEntry = {
 };
 
 const MOCK_BATCHES: Batch[] = [
+  {
+    id: '0',
+    name: "d'Alba UV Essence Cover-Up",
+    status: 'review_ready',
+    total_images: 1,
+    processed_images: 1,
+    avg_confidence: 92.1,
+    created_at: '2026-03-13T08:00:00Z',
+    target_languages: ['zh-Hant', 'en'],
+  },
   {
     id: '1',
     name: 'Brand X Summer 2026',
@@ -66,6 +84,34 @@ const MOCK_BATCHES: Batch[] = [
     target_languages: ['zh-Hant', 'en'],
   },
 ];
+
+import dalbaImage from '@/assets/sample-dalba.png';
+
+const DALBA_OCR_BLOCKS: OcrBlock[] = [
+  { korean: '내추럴 커버 베이지 선크림', zh_hant: '自然遮瑕米色防曬霜', english: 'Natural Cover Beige Sunscreen' },
+  { korean: '산뜻', zh_hant: '清爽', english: 'Fresh' },
+  { korean: '윤광', zh_hant: '光澤', english: 'Radiant Glow' },
+  { korean: '얼룩덜룩한 피부에 자연스러운 피부톤&잡티 커버', zh_hant: '為不均勻膚色帶來自然膚色遮瑕效果', english: 'Natural skin tone & blemish coverage for uneven skin' },
+  { korean: '커버력', zh_hant: '遮瑕力', english: 'Coverage' },
+  { korean: '에센스 선크림 (투명 선크림)', zh_hant: '精華防曬霜（透明防曬霜）', english: 'Essence Sunscreen (Clear Sunscreen)' },
+  { korean: '글로우 세럼 커버 쿠션', zh_hant: '光澤精華遮瑕氣墊', english: 'Glow Serum Cover Cushion' },
+  { korean: '수분감', zh_hant: '保濕度', english: 'Moisture Level' },
+  { korean: '파우더', zh_hant: '粉餅', english: 'Powder' },
+  { korean: '수분 크림', zh_hant: '保濕霜', english: 'Moisture Cream' },
+  { korean: '유분감', zh_hant: '油脂感', english: 'Oil Level' },
+];
+
+const MOCK_DALBA_IMAGE: ImageJob = {
+  id: 'img-dalba',
+  filename: 'dalba-uv-essence-cover-up.png',
+  status: 'high_confidence',
+  confidence_score: 92,
+  ocr_data: { total_blocks: 11 },
+  output_path_zh_hant: '/mock',
+  output_path_en: '/mock',
+  thumbnail: dalbaImage,
+  ocr_blocks: DALBA_OCR_BLOCKS,
+};
 
 const MOCK_IMAGES: ImageJob[] = [
   { id: 'img1', filename: 'serum-front.jpg', status: 'high_confidence', confidence_score: 95, ocr_data: { total_blocks: 8 }, output_path_zh_hant: '/mock', output_path_en: '/mock' },
@@ -104,7 +150,7 @@ export const mockAPI = {
     list: () => Promise.resolve(batches),
     get: (id: string) => Promise.resolve(batches.find(b => b.id === id) || null),
     getImages: (_id: string, _filter?: string | null) => {
-      let imgs = [...MOCK_IMAGES];
+      let imgs = _id === '0' ? [MOCK_DALBA_IMAGE] : [...MOCK_IMAGES];
       if (_filter === 'high') imgs = imgs.filter(i => i.status === 'high_confidence');
       if (_filter === 'medium') imgs = imgs.filter(i => i.status === 'medium_confidence');
       if (_filter === 'low') imgs = imgs.filter(i => i.status === 'low_confidence');

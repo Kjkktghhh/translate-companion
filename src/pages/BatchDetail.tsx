@@ -30,13 +30,15 @@ const CONF_COLOR = (score: number | null) => {
   return 'text-primary';
 };
 
-function ImageCard({ job, onApprove }: { job: ImageJob; onApprove: (id: string) => void; }) {
+function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove: (id: string) => void; selectedLang: string }) {
   const [preview, setPreview] = useState(false);
 
   return (
     <div className="glass rounded-xl overflow-hidden group">
       <div className="relative aspect-square bg-card overflow-hidden">
-        {job.output_path_zh_hant || job.output_path_en ? (
+        {job.thumbnail ? (
+          <img src={job.thumbnail} alt={job.filename} className="w-full h-full object-cover" />
+        ) : job.output_path_zh_hant || job.output_path_en ? (
           <div className="w-full h-full bg-gradient-to-br from-ink-700 to-ink-800 flex items-center justify-center">
             <span className="text-xs text-muted-foreground font-mono">{job.filename}</span>
           </div>
@@ -81,23 +83,42 @@ function ImageCard({ job, onApprove }: { job: ImageJob; onApprove: (id: string) 
 
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90" onClick={() => setPreview(false)}>
-          <div className="max-w-4xl w-full mx-4 glass rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="max-w-5xl w-full mx-4 glass rounded-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <span className="text-sm font-medium text-foreground">{job.filename}</span>
               <button onClick={() => setPreview(false)} className="text-muted-foreground hover:text-foreground">✕</button>
             </div>
-            <div className="grid grid-cols-2 gap-0">
+            <div className="grid grid-cols-2 gap-0 overflow-auto flex-1">
               <div className="p-6">
-                <div className="text-xs text-muted-foreground mb-2 font-mono">ORIGINAL</div>
-                <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
-                  <span className="text-sm text-muted-foreground">Original image preview</span>
-                </div>
+                <div className="text-xs text-muted-foreground mb-2 font-mono">ORIGINAL (KR)</div>
+                {job.thumbnail ? (
+                  <img src={job.thumbnail} alt="Original" className="w-full rounded-lg" />
+                ) : (
+                  <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">Original image preview</span>
+                  </div>
+                )}
               </div>
               <div className="p-6 border-l border-border">
-                <div className="text-xs text-muted-foreground mb-2 font-mono">TRANSLATED</div>
-                <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
-                  <span className="text-sm text-muted-foreground">Translated image preview</span>
+                <div className="text-xs text-muted-foreground mb-2 font-mono">
+                  TRANSLATED ({selectedLang === 'zh-Hant' ? '繁體中文' : 'English'})
                 </div>
+                {job.ocr_blocks && job.ocr_blocks.length > 0 ? (
+                  <div className="space-y-2">
+                    {job.ocr_blocks.map((block, i) => (
+                      <div key={i} className="glass rounded-lg p-3">
+                        <div className="text-[10px] text-muted-foreground font-mono mb-1">KR: {block.korean}</div>
+                        <div className="text-sm text-foreground font-medium">
+                          {selectedLang === 'zh-Hant' ? block.zh_hant : block.english}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">Translated image preview</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -231,6 +252,7 @@ export default function BatchDetail() {
               key={job.id}
               job={job}
               onApprove={handleApprove}
+              selectedLang={selectedLang}
             />
           ))}
         </div>
