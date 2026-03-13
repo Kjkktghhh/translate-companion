@@ -9,6 +9,12 @@ export type Batch = {
   target_languages: string[];
 };
 
+export type OcrBlock = {
+  korean: string;
+  zh_hant: string;
+  english: string;
+};
+
 export type ImageJob = {
   id: string;
   filename: string;
@@ -17,6 +23,8 @@ export type ImageJob = {
   ocr_data: { total_blocks: number } | null;
   output_path_zh_hant: string | null;
   output_path_en: string | null;
+  thumbnail?: string;
+  ocr_blocks?: OcrBlock[];
 };
 
 export type Glossary = {
