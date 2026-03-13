@@ -24,6 +24,8 @@ export type ImageJob = {
   output_path_zh_hant: string | null;
   output_path_en: string | null;
   thumbnail?: string;
+  translated_zh_hant?: string;
+  translated_en?: string;
   ocr_blocks?: OcrBlock[];
 };
 
