@@ -85,14 +85,32 @@ const MOCK_BATCHES: Batch[] = [
   },
 ];
 
+import dalbaImage from '@/assets/sample-dalba.png';
+
+const DALBA_OCR_BLOCKS: OcrBlock[] = [
+  { korean: '내추럴 커버 베이지 선크림', zh_hant: '自然遮瑕米色防曬霜', english: 'Natural Cover Beige Sunscreen' },
+  { korean: '산뜻', zh_hant: '清爽', english: 'Fresh' },
+  { korean: '윤광', zh_hant: '光澤', english: 'Radiant Glow' },
+  { korean: '얼룩덜룩한 피부에 자연스러운 피부톤&잡티 커버', zh_hant: '為不均勻膚色帶來自然膚色遮瑕效果', english: 'Natural skin tone & blemish coverage for uneven skin' },
+  { korean: '커버력', zh_hant: '遮瑕力', english: 'Coverage' },
+  { korean: '에센스 선크림 (투명 선크림)', zh_hant: '精華防曬霜（透明防曬霜）', english: 'Essence Sunscreen (Clear Sunscreen)' },
+  { korean: '글로우 세럼 커버 쿠션', zh_hant: '光澤精華遮瑕氣墊', english: 'Glow Serum Cover Cushion' },
+  { korean: '수분감', zh_hant: '保濕度', english: 'Moisture Level' },
+  { korean: '파우더', zh_hant: '粉餅', english: 'Powder' },
+  { korean: '수분 크림', zh_hant: '保濕霜', english: 'Moisture Cream' },
+  { korean: '유분감', zh_hant: '油脂感', english: 'Oil Level' },
+];
+
 const MOCK_DALBA_IMAGE: ImageJob = {
   id: 'img-dalba',
   filename: 'dalba-uv-essence-cover-up.png',
   status: 'high_confidence',
   confidence_score: 92,
-  ocr_data: { total_blocks: 14 },
+  ocr_data: { total_blocks: 11 },
   output_path_zh_hant: '/mock',
   output_path_en: '/mock',
+  thumbnail: dalbaImage,
+  ocr_blocks: DALBA_OCR_BLOCKS,
 };
 
 const MOCK_IMAGES: ImageJob[] = [
