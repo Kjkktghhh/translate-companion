@@ -36,6 +36,16 @@ export type GlossaryEntry = {
 
 const MOCK_BATCHES: Batch[] = [
   {
+    id: '0',
+    name: "d'Alba UV Essence Cover-Up",
+    status: 'review_ready',
+    total_images: 1,
+    processed_images: 1,
+    avg_confidence: 92.1,
+    created_at: '2026-03-13T08:00:00Z',
+    target_languages: ['zh-Hant', 'en'],
+  },
+  {
     id: '1',
     name: 'Brand X Summer 2026',
     status: 'review_ready',
