@@ -252,6 +252,7 @@ export default function BatchDetail() {
               key={job.id}
               job={job}
               onApprove={handleApprove}
+              selectedLang={selectedLang}
             />
           ))}
         </div>
