@@ -24,8 +24,6 @@ export type ImageJob = {
   output_path_zh_hant: string | null;
   output_path_en: string | null;
   thumbnail?: string;
-  translated_zh_hant?: string;
-  translated_en?: string;
   ocr_blocks?: OcrBlock[];
 };
 
@@ -88,8 +86,6 @@ const MOCK_BATCHES: Batch[] = [
 ];
 
 import dalbaImage from '@/assets/sample-dalba.png';
-import dalbaZhHant from '@/assets/sample-dalba-zh-hant.png';
-import dalbaEn from '@/assets/sample-dalba-en.png';
 
 const DALBA_OCR_BLOCKS: OcrBlock[] = [
   { korean: '내추럴 커버 베이지 선크림', zh_hant: '自然遮瑕米色防曬霜', english: 'Natural Cover Beige Sunscreen' },
@@ -114,8 +110,6 @@ const MOCK_DALBA_IMAGE: ImageJob = {
   output_path_zh_hant: '/mock',
   output_path_en: '/mock',
   thumbnail: dalbaImage,
-  translated_zh_hant: dalbaZhHant,
-  translated_en: dalbaEn,
   ocr_blocks: DALBA_OCR_BLOCKS,
 };
 

@@ -103,29 +103,20 @@ function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove:
                 <div className="text-xs text-muted-foreground mb-2 font-mono">
                   TRANSLATED ({selectedLang === 'zh-Hant' ? '繁體中文' : 'English'})
                 </div>
-                {(() => {
-                  const translatedImg = selectedLang === 'zh-Hant' ? job.translated_zh_hant : job.translated_en;
-                  if (translatedImg) {
-                    return <img src={translatedImg} alt="Translated" className="w-full rounded-lg" />;
-                  }
-                  return (
-                    <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
-                      <span className="text-sm text-muted-foreground">Translated image preview</span>
-                    </div>
-                  );
-                })()}
-                {job.ocr_blocks && job.ocr_blocks.length > 0 && (
-                  <div className="mt-4 space-y-1.5">
-                    <div className="text-xs text-muted-foreground font-mono mb-2">OCR BLOCKS</div>
+                {job.ocr_blocks && job.ocr_blocks.length > 0 ? (
+                  <div className="space-y-2">
                     {job.ocr_blocks.map((block, i) => (
-                      <div key={i} className="glass rounded-lg px-3 py-2 flex items-center gap-3">
-                        <span className="text-[10px] text-muted-foreground font-mono shrink-0">{block.korean}</span>
-                        <span className="text-xs text-foreground">→</span>
-                        <span className="text-xs text-foreground font-medium">
+                      <div key={i} className="glass rounded-lg p-3">
+                        <div className="text-[10px] text-muted-foreground font-mono mb-1">KR: {block.korean}</div>
+                        <div className="text-sm text-foreground font-medium">
                           {selectedLang === 'zh-Hant' ? block.zh_hant : block.english}
-                        </span>
+                        </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">Translated image preview</span>
                   </div>
                 )}
               </div>
