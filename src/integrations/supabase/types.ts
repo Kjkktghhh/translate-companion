@@ -14,7 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      batches: {
+        Row: {
+          avg_confidence: number | null
+          created_at: string
+          glossary_id: string | null
+          id: string
+          name: string
+          processed_images: number
+          status: string
+          target_languages: string[]
+          total_images: number
+          updated_at: string
+        }
+        Insert: {
+          avg_confidence?: number | null
+          created_at?: string
+          glossary_id?: string | null
+          id?: string
+          name: string
+          processed_images?: number
+          status?: string
+          target_languages?: string[]
+          total_images?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_confidence?: number | null
+          created_at?: string
+          glossary_id?: string | null
+          id?: string
+          name?: string
+          processed_images?: number
+          status?: string
+          target_languages?: string[]
+          total_images?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      image_jobs: {
+        Row: {
+          batch_id: string
+          confidence_score: number | null
+          created_at: string
+          filename: string
+          id: string
+          output_path_en: string | null
+          output_path_zh_hant: string | null
+          status: string
+          storage_path: string | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          confidence_score?: number | null
+          created_at?: string
+          filename: string
+          id?: string
+          output_path_en?: string | null
+          output_path_zh_hant?: string | null
+          status?: string
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          filename?: string
+          id?: string
+          output_path_en?: string | null
+          output_path_zh_hant?: string | null
+          status?: string
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_jobs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_blocks: {
+        Row: {
+          block_index: number
+          confidence: number | null
+          created_at: string
+          english: string | null
+          id: string
+          image_job_id: string
+          korean: string
+          zh_hant: string | null
+        }
+        Insert: {
+          block_index?: number
+          confidence?: number | null
+          created_at?: string
+          english?: string | null
+          id?: string
+          image_job_id: string
+          korean: string
+          zh_hant?: string | null
+        }
+        Update: {
+          block_index?: number
+          confidence?: number | null
+          created_at?: string
+          english?: string | null
+          id?: string
+          image_job_id?: string
+          korean?: string
+          zh_hant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_blocks_image_job_id_fkey"
+            columns: ["image_job_id"]
+            isOneToOne: false
+            referencedRelation: "image_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
