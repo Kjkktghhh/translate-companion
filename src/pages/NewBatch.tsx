@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Loader2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mockAPI, type Glossary } from '@/lib/mock-data';
+import { api } from '@/lib/api';
 
 const LANGUAGES = [
   { code: 'zh-Hant', label: '繁體中文', sublabel: 'Traditional Chinese' },
@@ -32,14 +32,8 @@ export default function NewBatch() {
   const [files, setFiles] = useState<File[]>([]);
   const [batchName, setBatchName] = useState('');
   const [selectedLangs, setSelectedLangs] = useState(['zh-Hant', 'en']);
-  const [glossaryId, setGlossaryId] = useState('');
-  const [glossaries, setGlossaries] = useState<Glossary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    mockAPI.glossaries.list().then(setGlossaries);
-  }, []);
 
   const onDrop = useCallback((accepted: File[]) => {
     setFiles(prev => {
@@ -69,8 +63,13 @@ export default function NewBatch() {
     setLoading(true);
     setError('');
 
-    const batch = await mockAPI.batches.create(batchName, selectedLangs, glossaryId, files.length);
-    navigate(`/batches/${batch.id}`);
+    try {
+      const batch = await api.batches.create(batchName, selectedLangs, '', files);
+      navigate(`/batches/${batch.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create batch');
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,25 +125,6 @@ export default function NewBatch() {
                   </div>
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className="glass rounded-xl p-5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-3">
-              Brand Glossary
-            </label>
-            <div className="relative">
-              <select
-                value={glossaryId}
-                onChange={e => setGlossaryId(e.target.value)}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary appearance-none"
-              >
-                <option value="">No glossary</option>
-                {glossaries.map(g => (
-                  <option key={g.id} value={g.id}>{g.name} ({g.entry_count} terms)</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
           </div>
 

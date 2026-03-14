@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, CheckCheck, Loader2, Eye, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mockAPI, type Batch, type ImageJob } from '@/lib/mock-data';
+import { api, type Batch, type ImageJob, type OcrBlock } from '@/lib/api';
 
 const FILTERS = [
   { value: null,      label: 'All' },
@@ -32,30 +32,45 @@ const CONF_COLOR = (score: number | null) => {
 
 function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove: (id: string) => void; selectedLang: string }) {
   const [preview, setPreview] = useState(false);
+  const [ocrBlocks, setOcrBlocks] = useState<OcrBlock[]>([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+
+  const openPreview = async () => {
+    setPreview(true);
+    setLoadingBlocks(true);
+    try {
+      const blocks = await api.batches.getOcrBlocks(job.id);
+      setOcrBlocks(blocks);
+    } catch (e) {
+      console.error('Failed to load OCR blocks:', e);
+    } finally {
+      setLoadingBlocks(false);
+    }
+  };
 
   return (
     <div className="glass rounded-xl overflow-hidden group">
       <div className="relative aspect-square bg-card overflow-hidden">
-        {job.thumbnail ? (
-          <img src={job.thumbnail} alt={job.filename} className="w-full h-full object-cover" />
-        ) : job.output_path_zh_hant || job.output_path_en ? (
-          <div className="w-full h-full bg-gradient-to-br from-ink-700 to-ink-800 flex items-center justify-center">
-            <span className="text-xs text-muted-foreground font-mono">{job.filename}</span>
-          </div>
-        ) : (
+        {job.thumbnail_url ? (
+          <img src={job.thumbnail_url} alt={job.filename} className="w-full h-full object-cover" />
+        ) : job.status === 'pending' || job.status === 'processing' ? (
           <div className="w-full h-full flex items-center justify-center">
             <Loader2 size={20} className="text-ink-600 animate-spin" />
+          </div>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-ink-700 to-ink-800 flex items-center justify-center">
+            <span className="text-xs text-muted-foreground font-mono">{job.filename}</span>
           </div>
         )}
 
         <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
           <button
-            onClick={() => setPreview(true)}
+            onClick={openPreview}
             className="p-2 bg-card rounded-lg hover:bg-secondary text-foreground transition-colors"
           >
             <Eye size={14} />
           </button>
-          {job.status !== 'approved' && (
+          {job.status !== 'approved' && job.status !== 'pending' && job.status !== 'processing' && (
             <button
               onClick={() => onApprove(job.id)}
               className="p-2 bg-green-500/20 rounded-lg hover:bg-green-500/40 text-green-400 transition-colors"
@@ -75,9 +90,6 @@ function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove:
           <span className={cn('text-xs font-mono', CONF_COLOR(job.confidence_score))}>
             {job.confidence_score ? `${job.confidence_score}%` : '—'}
           </span>
-          <span className="text-[10px] text-ink-600 font-mono">
-            {job.ocr_data ? `${job.ocr_data.total_blocks} blocks` : ''}
-          </span>
         </div>
       </div>
 
@@ -91,8 +103,8 @@ function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove:
             <div className="grid grid-cols-2 gap-0 overflow-auto flex-1">
               <div className="p-6">
                 <div className="text-xs text-muted-foreground mb-2 font-mono">ORIGINAL (KR)</div>
-                {job.thumbnail ? (
-                  <img src={job.thumbnail} alt="Original" className="w-full rounded-lg" />
+                {job.thumbnail_url ? (
+                  <img src={job.thumbnail_url} alt="Original" className="w-full rounded-lg" />
                 ) : (
                   <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
                     <span className="text-sm text-muted-foreground">Original image preview</span>
@@ -103,20 +115,31 @@ function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove:
                 <div className="text-xs text-muted-foreground mb-2 font-mono">
                   TRANSLATED ({selectedLang === 'zh-Hant' ? '繁體中文' : 'English'})
                 </div>
-                {job.ocr_blocks && job.ocr_blocks.length > 0 ? (
+                {loadingBlocks ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                  </div>
+                ) : ocrBlocks.length > 0 ? (
                   <div className="space-y-2">
-                    {job.ocr_blocks.map((block, i) => (
-                      <div key={i} className="glass rounded-lg p-3">
+                    {ocrBlocks.map((block) => (
+                      <div key={block.id} className="glass rounded-lg p-3">
                         <div className="text-[10px] text-muted-foreground font-mono mb-1">KR: {block.korean}</div>
                         <div className="text-sm text-foreground font-medium">
                           {selectedLang === 'zh-Hant' ? block.zh_hant : block.english}
                         </div>
+                        {block.confidence && (
+                          <div className={cn('text-[10px] font-mono mt-1', CONF_COLOR(block.confidence))}>
+                            {block.confidence}% confidence
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="w-full aspect-[4/3] bg-gradient-to-br from-ink-700 to-ink-800 rounded-lg flex items-center justify-center">
-                    <span className="text-sm text-muted-foreground">Translated image preview</span>
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {job.status === 'pending' || job.status === 'processing'
+                      ? 'Still processing…'
+                      : 'No translations found'}
                   </div>
                 )}
               </div>
@@ -136,21 +159,29 @@ export default function BatchDetail() {
   const [selectedLang, setSelectedLang] = useState('zh-Hant');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = async () => {
     if (!id) return;
-    Promise.all([
-      mockAPI.batches.get(id),
-      mockAPI.batches.getImages(id, filter),
-    ]).then(([b, imgs]) => {
-      setBatch(b);
-      setImages(imgs);
-      setLoading(false);
-    });
-  }, [id, filter]);
+    const [b, imgs] = await Promise.all([
+      api.batches.get(id),
+      api.batches.getImages(id, filter),
+    ]);
+    setBatch(b);
+    setImages(imgs);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [id, filter]);
+
+  // Auto-refresh while processing
+  useEffect(() => {
+    const hasProcessing = images.some(img => img.status === 'pending' || img.status === 'processing');
+    if (!hasProcessing) return;
+    const interval = setInterval(load, 4000);
+    return () => clearInterval(interval);
+  }, [images]);
 
   const handleApprove = async (imageId: string) => {
-    if (!id) return;
-    await mockAPI.batches.approve(id, imageId);
+    await api.batches.approve(imageId);
     setImages(prev => prev.map(img =>
       img.id === imageId ? { ...img, status: 'approved' } : img
     ));
@@ -180,7 +211,7 @@ export default function BatchDetail() {
           <h1 className="font-display text-2xl text-foreground">{batch.name}</h1>
           <p className="text-muted-foreground text-sm mt-1 font-mono">
             {batch.processed_images}/{batch.total_images} processed ·{' '}
-            {batch.avg_confidence ? `${batch.avg_confidence.toFixed(1)}% avg confidence` : 'processing…'}
+            {batch.avg_confidence ? `${Number(batch.avg_confidence).toFixed(1)}% avg confidence` : 'processing…'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -198,13 +229,6 @@ export default function BatchDetail() {
               </button>
             ))}
           </div>
-          <a
-            href={mockAPI.batches.exportZipUrl(id!)}
-            className="flex items-center gap-2 px-4 py-2 glass hover:bg-secondary/50 text-foreground rounded-lg text-sm transition-colors"
-          >
-            <Download size={14} />
-            Export ZIP
-          </a>
         </div>
       </div>
 

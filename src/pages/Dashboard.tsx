@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, CheckCircle, AlertCircle, Loader2, Plus, ChevronRight, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mockAPI, type Batch } from '@/lib/mock-data';
+import { api, type Batch } from '@/lib/api';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   queued:         { label: 'Queued',        color: 'text-muted-foreground', dot: 'bg-muted-foreground' },
@@ -31,12 +31,22 @@ export default function Dashboard() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    mockAPI.batches.list().then(data => {
+  const load = () => {
+    api.batches.list().then(data => {
       setBatches(data);
       setLoading(false);
-    });
-  }, []);
+    }).catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // Auto-refresh every 5s if there are active batches
+  useEffect(() => {
+    const hasActive = batches.some(b => !['complete', 'failed', 'review_ready'].includes(b.status));
+    if (!hasActive) return;
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [batches]);
 
   const active = batches.filter(b => !['complete', 'failed', 'review_ready'].includes(b.status));
   const ready = batches.filter(b => b.status === 'review_ready');
@@ -117,7 +127,7 @@ export default function Dashboard() {
                       </span>
                       {batch.avg_confidence && (
                         <span className="text-xs text-muted-foreground font-mono">
-                          {batch.avg_confidence.toFixed(1)}% conf
+                          {Number(batch.avg_confidence).toFixed(1)}% conf
                         </span>
                       )}
                       <span className="text-xs text-ink-600 font-mono ml-auto">
