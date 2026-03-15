@@ -115,33 +115,63 @@ function ImageCard({ job, onApprove, selectedLang }: { job: ImageJob; onApprove:
                 <div className="text-xs text-muted-foreground mb-2 font-mono">
                   TRANSLATED ({selectedLang === 'zh-Hant' ? '繁體中文' : 'English'})
                 </div>
-                {loadingBlocks ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 size={20} className="animate-spin text-muted-foreground" />
-                  </div>
-                ) : ocrBlocks.length > 0 ? (
-                  <div className="space-y-2">
-                    {ocrBlocks.map((block) => (
-                      <div key={block.id} className="glass rounded-lg p-3">
-                        <div className="text-[10px] text-muted-foreground font-mono mb-1">KR: {block.korean}</div>
-                        <div className="text-sm text-foreground font-medium">
-                          {selectedLang === 'zh-Hant' ? block.zh_hant : block.english}
-                        </div>
-                        {block.confidence && (
-                          <div className={cn('text-[10px] font-mono mt-1', CONF_COLOR(block.confidence))}>
-                            {block.confidence}% confidence
-                          </div>
-                        )}
+                {(() => {
+                  const outputUrl = selectedLang === 'zh-Hant' ? job.output_path_zh_hant : job.output_path_en;
+                  const hasInpaintedImage = outputUrl && outputUrl.startsWith('http');
+                  
+                  if (loadingBlocks) {
+                    return (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 size={20} className="animate-spin text-muted-foreground" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    {job.status === 'pending' || job.status === 'processing'
-                      ? 'Still processing…'
-                      : 'No translations found'}
-                  </div>
-                )}
+                    );
+                  }
+                  
+                  return (
+                    <div className="space-y-4">
+                      {hasInpaintedImage && (
+                        <div>
+                          <img src={outputUrl} alt="Translated" className="w-full rounded-lg" />
+                          <a 
+                            href={outputUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline"
+                          >
+                            <Download size={12} /> Download translated image
+                          </a>
+                        </div>
+                      )}
+                      
+                      {ocrBlocks.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-[10px] text-muted-foreground font-mono uppercase">Text Blocks</div>
+                          {ocrBlocks.map((block) => (
+                            <div key={block.id} className="glass rounded-lg p-3">
+                              <div className="text-[10px] text-muted-foreground font-mono mb-1">KR: {block.korean}</div>
+                              <div className="text-sm text-foreground font-medium">
+                                {selectedLang === 'zh-Hant' ? block.zh_hant : block.english}
+                              </div>
+                              {block.confidence && (
+                                <div className={cn('text-[10px] font-mono mt-1', CONF_COLOR(block.confidence))}>
+                                  {block.confidence}% confidence
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {!hasInpaintedImage && ocrBlocks.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground text-sm">
+                          {job.status === 'pending' || job.status === 'processing'
+                            ? 'Still processing…'
+                            : 'No translations found'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
