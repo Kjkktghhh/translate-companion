@@ -307,14 +307,104 @@ serve(async (req) => {
     if (avgConfidence < 70) status = "low_confidence";
     else if (avgConfidence < 90) status = "medium_confidence";
 
+    // Step 4: Inpainting - replace Korean text with translated text on the image
+    const imageDataUrl = `data:${mimeType};base64,${base64}`;
+    let outputPathZhHant: string | null = null;
+    let outputPathEn: string | null = null;
+
+    const inpaintForLang = async (langKey: "zh_hant" | "english", langLabel: string) => {
+      const textMappings = translations
+        .map((t: { korean: string; zh_hant?: string; english?: string }) => {
+          const translated = langKey === "zh_hant" ? t.zh_hant : t.english;
+          return translated ? `"${t.korean}" → "${translated}"` : null;
+        })
+        .filter(Boolean)
+        .join("\n");
+
+      const inpaintResponse = await fetch(
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "image_url",
+                    image_url: { url: imageDataUrl },
+                  },
+                  {
+                    type: "text",
+                    text: `Replace ALL Korean text in this product image with the ${langLabel} translations below. Keep the EXACT same layout, font sizes, colors, and design. Only change the text content. Maintain the original image quality and style perfectly.\n\nText replacements:\n${textMappings}`,
+                  },
+                ],
+              },
+            ],
+            modalities: ["image", "text"],
+          }),
+        }
+      );
+
+      if (!inpaintResponse.ok) {
+        console.error(`Inpainting ${langLabel} error:`, inpaintResponse.status, await inpaintResponse.text());
+        return null;
+      }
+
+      const inpaintResult = await inpaintResponse.json();
+      const generatedImage = inpaintResult.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!generatedImage) {
+        console.error(`No inpainted image returned for ${langLabel}`);
+        return null;
+      }
+
+      // Upload inpainted image to storage
+      const base64Data = generatedImage.replace(/^data:image\/\w+;base64,/, "");
+      const binaryStr = atob(base64Data);
+      const imgBytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        imgBytes[i] = binaryStr.charCodeAt(i);
+      }
+
+      const suffix = langKey === "zh_hant" ? "zh-hant" : "en";
+      const outputPath = `${job.batch_id}/output_${suffix}_${job.filename}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("batch-images")
+        .upload(outputPath, imgBytes, { contentType: "image/png", upsert: true });
+
+      if (uploadErr) {
+        console.error(`Upload inpainted ${langLabel} error:`, uploadErr);
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("batch-images")
+        .getPublicUrl(outputPath);
+
+      return urlData?.publicUrl || outputPath;
+    };
+
+    if (needZh) {
+      outputPathZhHant = await inpaintForLang("zh_hant", "Traditional Chinese (繁體中文)");
+    }
+    if (needEn) {
+      outputPathEn = await inpaintForLang("english", "English");
+    }
+
     // Update image job
     await supabase
       .from("image_jobs")
       .update({
         status,
         confidence_score: Math.round(avgConfidence * 10) / 10,
-        output_path_zh_hant: needZh ? "translated" : null,
-        output_path_en: needEn ? "translated" : null,
+        output_path_zh_hant: outputPathZhHant,
+        output_path_en: outputPathEn,
       })
       .eq("id", image_job_id);
 
