@@ -43,9 +43,15 @@ serve(async (req) => {
 
     if (!imageData) throw new Error("Failed to download image from storage");
 
-    // Convert to base64
+    // Convert to base64 (chunk to avoid stack overflow)
     const arrayBuffer = await imageData.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
     const mimeType = job.filename.endsWith(".png") ? "image/png" : "image/jpeg";
 
     // Step 1: OCR - Extract Korean text from image using vision
